@@ -2,20 +2,23 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css?family=EB+Garamond" rel="stylesheet">
   <style>
     body {
       font-family: sans-serif;
-      background-color: rgb(245, 245, 245);
+      background-color: white;
+      max-width: 30em;
     }
 
     select,
     button {
       font-size: 100%;
-      max-width: 100%;
+      max-width: 15em;
     }
 
     #title {
       font-size: 120%;
+      font-weight: bold;
     }
 
     #about>p {
@@ -27,51 +30,40 @@
       margin: 0.5em 0;
       padding: 0.5em;
       border-radius: 0.5em;
-      background-color: white;
+      font-family: 'EB Garamond', serif;
+      background-color: rgb(245, 245, 245);
     }
 
     #poem {
-      height: 7em;
+      max-height: 7em;
       overflow: scroll;
     }
   </style>
 </head>
 
 <body>
-  <h2><a href="https://github.com/kylemcdonald/gpt-2-poetry">gpt-2-poetry</a></h2>
   <p>
-    This shows example output from <a href="https://github.com/openai/gpt-2">GPT-2</a> when primed with a 16 random
-    lines from <a
-      href="https://www.poetryfoundation.org/poets/browse#page=1&sort_by=recently_added&school-period=164">romantic-era
-      poetry</a> followed by a "seed" word.
+    Neural poetry given a <b>style</b> and <b>subject</b>.
   </p>
-  
-  <p>First pick a poem for inspiration:</p>
 
-  <div class="section">
-    <select id="poems"></select>
-    <a href="" id="about">
-      <p id="title"></p>
-      <p id="author"></p>
-    </a>
-    <div id="poem"></div>
-  </div>
+  <select id="poems"></select> <button onclick="randomSelect(selectPoems); update();">random</button>
+  <div id="poem" class="section">Loading...</div>
 
-  <p>Then pick a seed word:</p>
+  <select id="seeds"></select> <button onclick="randomSelect(selectSeeds); update();">random</button> <button
+    onclick="regenerate()">regenerate</button>
+  <p id="generated" class="section">Loading...</p>
 
-  <div class="section">
-    <select id="seeds"></select> <button onclick="random()">random</button>
-    <p id="generated"></p>
-  </div>
+  <p>
+      <a href="https://github.com/openai/gpt-2">GPT-2</a> and <a
+      href="https://www.poetryfoundation.org/poets/browse#page=1&sort_by=recently_added&school-period=164">romantic-era
+      poetry</a>, <a href="https://github.com/kylemcdonald/gpt-2-poetry">code</a> by <a href="https://twitter.com/kcimc/">@kcimc</a>
+  </p>
 
   <script>
     let index = 0;
 
     let selectPoems = document.querySelector('#poems');
     let selectSeeds = document.querySelector('#seeds');
-    let aboutElt = document.querySelector("#about");
-    let titleElt = document.querySelector("#title");
-    let authorElt = document.querySelector("#author");
     let poemElt = document.querySelector("#poem");
     let generatedElt = document.querySelector("#generated");
 
@@ -82,16 +74,22 @@
     function update() {
       let key = selectPoems.value;
       let poem = poems[key];
-      aboutElt.href = 'http://' + poem.url;
-      authorElt.innerHTML = poem.author;
-      titleElt.innerHTML = poem.title;
+      // aboutElt.href = 'http://' + poem.url;
+      // authorElt.innerHTML = poem.author;
+      // titleElt.innerHTML = poem.title;
       poemElt.innerHTML = poem.poem.join('<br/>');
 
       let seed = selectSeeds.value;
       generatedElt.innerHTML = convertNewlines(generated[seed][key][index]) + '...';
     }
 
-    function random() {
+    function randomSelect(elt) {
+      let n = elt.options.length;
+      let i = Math.floor(Math.random() * n);
+      elt.value = elt.options[i].value;
+    }
+
+    function regenerate() {
       index = (index + 1) % 10;
       update();
     }
@@ -126,6 +124,9 @@
           opt.value = key;
           selectSeeds.add(opt);
         }
+
+        randomSelect(selectPoems);
+        randomSelect(selectSeeds);
 
         selectSeeds.onchange = update;
         selectPoems.onchange = update;
