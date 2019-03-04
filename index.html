@@ -1,0 +1,136 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: rgb(245, 245, 245);
+    }
+
+    select,
+    button {
+      font-size: 100%;
+      max-width: 100%;
+    }
+
+    #title {
+      font-size: 120%;
+    }
+
+    #about>p {
+      margin: 0.5em 0;
+    }
+
+    .section {
+      border: 1px solid #ccc;
+      margin: 0.5em 0;
+      padding: 0.5em;
+      border-radius: 0.5em;
+      background-color: white;
+    }
+
+    #poem {
+      height: 7em;
+      overflow: scroll;
+    }
+  </style>
+</head>
+
+<body>
+  <p>
+    This shows example output from <a href="https://github.com/openai/gpt-2">GPT-2</a> when primed with a 16 random
+    lines from <a
+      href="https://www.poetryfoundation.org/poets/browse#page=1&sort_by=recently_added&school-period=164">romantic-era
+      poetry</a> followed by a "seed" word.
+  </p>
+  
+  <p>First pick a poem for inspiration:</p>
+
+  <div class="section">
+    <select id="poems"></select>
+    <a href="" id="about">
+      <p id="title"></p>
+      <p id="author"></p>
+    </a>
+    <div id="poem"></div>
+  </div>
+
+  <p>Then pick a seed word:</p>
+
+  <div class="section">
+    <select id="seeds"></select> <button onclick="random()">random</button>
+    <p id="generated"></p>
+  </div>
+
+  <script>
+    let index = 0;
+
+    let selectPoems = document.querySelector('#poems');
+    let selectSeeds = document.querySelector('#seeds');
+    let aboutElt = document.querySelector("#about");
+    let titleElt = document.querySelector("#title");
+    let authorElt = document.querySelector("#author");
+    let poemElt = document.querySelector("#poem");
+    let generatedElt = document.querySelector("#generated");
+
+    function convertNewlines(text) {
+      return text.split('\n').join('<br/>').split('<|endoftext|>')[0];
+    }
+
+    function update() {
+      let key = selectPoems.value;
+      let poem = poems[key];
+      aboutElt.href = 'http://' + poem.url;
+      authorElt.innerHTML = poem.author;
+      titleElt.innerHTML = poem.title;
+      poemElt.innerHTML = poem.poem.join('<br/>');
+
+      let seed = selectSeeds.value;
+      generatedElt.innerHTML = convertNewlines(generated[seed][key][index]) + '...';
+    }
+
+    function random() {
+      index = (index + 1) % 10;
+      update();
+    }
+
+    Promise.all([
+      fetch('poems.json').then(e => e.json()),
+      fetch('generated.json').then(e => e.json())
+    ])
+      .then(files => {
+        poems = files[0];
+        generated = files[1];
+
+        let sortable = [];
+        for (key in poems) {
+          let poem = poems[key];
+          sortable.push([
+            poem['author'] + ' > ' + poem['title'],
+            key
+          ])
+        }
+        sortable.sort();
+        sortable.forEach(item => {
+          let opt = document.createElement("option");
+          opt.text = item[0];
+          opt.value = item[1];
+          selectPoems.add(opt);
+        })
+
+        for (key in generated) {
+          let opt = document.createElement("option");
+          opt.text = key;
+          opt.value = key;
+          selectSeeds.add(opt);
+        }
+
+        selectSeeds.onchange = update;
+        selectPoems.onchange = update;
+        update();
+      })
+  </script>
+</body>
+
+</html>
